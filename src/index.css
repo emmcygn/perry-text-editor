@@ -158,6 +158,17 @@ body {
   break-inside: avoid;
 }
 
+/* Accept/reject flash — fades out over the 3-second display window */
+.suggestion-flash {
+  animation: flash-fade 3s ease-in forwards;
+}
+
+@keyframes flash-fade {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* First heading — no top margin (the document starts right away) */
 [data-slate-editor] > :first-child {
   margin-top: 0;

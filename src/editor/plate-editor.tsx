@@ -61,6 +61,8 @@ export function PlateEditorContent() {
   // triggering re-decoration of all nodes.
   const highlightRange = useAnnotationStore((s) => s.highlightRange);
   const highlightPhase = useAnnotationStore((s) => s.highlightPhase);
+  const flashRange = useAnnotationStore((s) => s.flashRange);
+  const flashType = useAnnotationStore((s) => s.flashType);
 
   const decorate = useCallback(
     ({ entry }: { entry: [node: Record<string, unknown>, path: number[]] }) => {
@@ -84,6 +86,23 @@ export function PlateEditorContent() {
         }
       }
 
+      // --- Accept/reject flash highlight ---
+      if (flashRange && flashType) {
+        const nodeRange: TRange = {
+          anchor: { path, offset: 0 },
+          focus: { path, offset: node.text.length },
+        };
+        const flashIntersection = rangeIntersection(flashRange, nodeRange);
+        if (flashIntersection) {
+          results.push({
+            ...flashIntersection,
+            highlight: true,
+            flash: true,
+            flashType,
+          } as DecoratedRange);
+        }
+      }
+
       // --- Comment highlight (comment_* keys) ---
       const hasComment = Object.keys(node).some((key) => key.startsWith('comment_'));
       if (hasComment) {
@@ -96,7 +115,7 @@ export function PlateEditorContent() {
 
       return results;
     },
-    [highlightRange, highlightPhase],
+    [highlightRange, highlightPhase, flashRange, flashType],
   );
 
   return (
