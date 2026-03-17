@@ -162,7 +162,26 @@ Solution: manually inject suggestion marks using `editor.tf.insertNodes` and `se
 
 Mammoth.js converts DOCX → HTML with a custom style mapping for V14 styles (the law firm's template). Plate's `deserializeHtml` converts HTML → Slate AST. A post-processing step assigns sequential IDs (`p{n}_{nanoid}`) to every block-level element — the numeric prefix preserves document order for sidebar sorting, and the nanoid suffix ensures uniqueness.
 
-The style mapping handles 7 V14 variants (Level 1-4 EN, Level 1 EN CAPS, Introduction EN, Parties EN, TOC styles) plus standard Word `Heading 1`–`Heading 6`, and falls back gracefully for unmapped styles.
+The pipeline includes three post-processing stages between Mammoth output and Plate deserialization:
+
+1. **TOC cleanup** — strips page numbers and internal anchor links from table-of-contents entries. Page numbers reference Word's paginated layout and are meaningless in a web editor.
+2. **List annotation** — adds `data-list-style-type` and `data-indent` attributes to `<li>` elements, bridging Mammoth's standard HTML list output to Plate's indent-based list model.
+3. **Table rendering** — custom Plate element components render table nodes as actual `<table>/<tr>/<td>` HTML instead of Plate's default `<div>` wrappers.
+
+The style mapping handles V14 heading variants (Level 1-4 EN, Level 1 EN CAPS), TOC styles, and standard Word `Heading 1`–`Heading 6`. Body-text styles like V14 Introduction EN and V14 Parties EN are intentionally unmapped so Mammoth's default list detection can handle their Word numbering.
+
+#### Known Limitation: Word Auto-Numbering
+
+Word's multi-level numbering engine (section numbers like "1.1", "2.1" and clause markers like "(a)", "(b)") is stored in the DOCX's `word/numbering.xml` as abstract numbering definitions — not as text. Mammoth.js does not reproduce this numbering; it only detects basic `<ol>/<ul>` list structure.
+
+This means headings render without their section numbers ("Employee Incentive Scheme" instead of "1 Employee Incentive Scheme") and sub-clauses render without their letter markers ("amendments to..." instead of "(a) amendments to..."). The content is complete and correct; only the auto-generated numbering prefixes are absent.
+
+This is an accepted trade-off. Mammoth.js was chosen for its semantic extraction — heading hierarchy, paragraph structure, tables, and inline formatting all convert cleanly into Slate's document model, which is what the anchoring and annotation systems need. The numbering gap is cosmetic and doesn't affect functionality.
+
+With more time, I'd approach this differently:
+- **Hybrid rendering** — use a library like `docx-preview` for pixel-perfect document display (preserving all Word formatting including numbering), while running Mammoth in parallel to extract the semantic Slate model for anchoring and AI review. The visual layer shows the faithful rendering; the data layer powers the annotation features.
+- **Server-side conversion** — a LibreOffice headless service could convert DOCX → HTML/PDF with full numbering fidelity, avoiding the client-side limitation entirely.
+- **Numbering XML parser** — parse `word/numbering.xml` directly to extract the abstract numbering definitions, resolve per-level formats, and inject prefixes during import. This is viable but exercises XML parsing rather than editor architecture, so it's a lower-signal investment for a take-home.
 
 ## What I'd Improve With More Time
 
