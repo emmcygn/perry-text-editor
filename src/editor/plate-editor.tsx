@@ -1,8 +1,8 @@
 import { type ReactNode, useMemo, useCallback } from 'react';
 import { Plate, PlateContent, usePlateEditor } from 'platejs/react';
-import { type Value, type TRange, createSlateEditor, deserializeHtml } from 'platejs';
-import { editorPlugins } from '@/editor/editor-kit';
-import { assignNodeIds } from '@/lib/docx-import';
+import { type Value, type TRange, createSlateEditor } from 'platejs';
+import { editorPlugins, ParagraphElement } from '@/editor/editor-kit';
+import { htmlToPlateNodes } from '@/lib/docx-import';
 import { AnchorNavigator } from '@/editor/anchor-navigator';
 import { useAnnotationStore } from '@/lib/annotations/store';
 import { rangeIntersection } from '@/editor/plugins/highlight-plugin';
@@ -23,15 +23,19 @@ export function PlateEditor({ initialHtml, initialValue, children }: PlateEditor
 
     // Create a temporary headless editor for deserialization
     const tempEditor = createSlateEditor({ plugins: editorPlugins });
-    const fragment = deserializeHtml(tempEditor, { element: initialHtml });
 
-    return assignNodeIds(fragment) as Value;
+    return htmlToPlateNodes(tempEditor, initialHtml) as Value;
   }, [initialHtml, initialValue]);
 
   const editor = usePlateEditor(
     {
       plugins: editorPlugins,
       value: value,
+      override: {
+        components: {
+          p: ParagraphElement,
+        },
+      },
     },
     [],
   );
