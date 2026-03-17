@@ -13,6 +13,13 @@ const STYLE_MAP = [
   "p[style-name='V14 TOC 3 EN'] => p:fresh",
   "p[style-name='V14 TOC Heading EN'] => h2:fresh",
   "p[style-name='TOC Heading'] => h2:fresh",
+  // Standard Word heading styles — ensures any DOCX renders with heading hierarchy
+  "p[style-name='Heading 1'] => h1:fresh",
+  "p[style-name='Heading 2'] => h2:fresh",
+  "p[style-name='Heading 3'] => h3:fresh",
+  "p[style-name='Heading 4'] => h4:fresh",
+  "p[style-name='Heading 5'] => h5:fresh",
+  "p[style-name='Heading 6'] => h6:fresh",
   "p[style-name='toc 1'] => p:fresh",
   "p[style-name='toc 2'] => p:fresh",
   "p[style-name='toc 3'] => p:fresh",
