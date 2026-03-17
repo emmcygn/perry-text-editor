@@ -11,8 +11,6 @@ pnpm install
 pnpm dev        # → http://localhost:5173
 ```
 
-The DOCX file is bundled in `public/document.docx` and loads automatically on startup.
-
 ```bash
 pnpm test       # 282 tests (unit + adversarial)
 pnpm build      # Production build (includes type-check via tsc -b)
@@ -20,13 +18,37 @@ pnpm build      # Production build (includes type-check via tsc -b)
 
 ## Demo Walkthrough
 
-1. **Document loads** — the shareholders' agreement renders with proper legal typography (headings, numbered clauses, tables)
+### Option A: Sample Document (full demo)
+
+1. On the landing page, click **"Load Sample Document"** — the bundled shareholders' agreement loads with full AI review support
 2. **Click "Get Perry's Review"** — simulates an AI review pass. After 1.5s, 10 review items appear in the sidebar (5 suggestions with red/green marks in the editor, 5 discussion comments with yellow highlights)
 3. **Click a sidebar card** — the editor scrolls to the relevant text and highlights it in yellow. The highlight persists while the card is selected
 4. **Accept/Reject suggestions** — accept applies the suggested change; reject restores original text. Both remove the suggestion marks
 5. **Resolve comments** — marks discussion threads as resolved
 6. **Add your own comments** — select text in the editor, click the floating "Add Comment" button
 7. **Toggle suggesting mode** — toolbar toggle switches between direct editing and track-changes mode. Edits in suggesting mode create new suggestion marks
+
+### Option B: Upload Your Own Document
+
+1. **Drag-and-drop any .docx** onto the landing page, or click to browse
+2. The document renders with heading hierarchy (standard Word heading styles are mapped automatically)
+3. **Manual commenting and suggesting mode** work on any uploaded document
+4. AI review is disabled for uploaded documents — the button shows "AI review (sample doc only)" since the review data is anchored to the sample document's specific text
+
+Loading a new document (or switching back to the sample) resets all annotation state cleanly.
+
+### Why Multi-Document Support?
+
+This feature demonstrates **extensibility** — the architecture isn't coupled to a single hardcoded file. It shows that the DOCX import pipeline, editor, annotation store, and sidebar all work as a general-purpose system. The upload UI also demonstrates a realistic user workflow: in production, users would upload their own contracts for review, not rely on a bundled file.
+
+The key architectural signal: swapping documents correctly resets the Zustand store, re-mounts the Plate editor (via React key), and scopes the mock AI review to only the document it was designed for — rather than producing broken anchors on arbitrary content.
+
+### Limitations
+
+- **AI review is sample-only.** The 10 review items are hardcoded with anchors targeting specific text in the shareholders' agreement. Running them against a different document would produce unresolvable anchors. A real integration would call an LLM and generate anchors dynamically.
+- **No document persistence.** Uploaded documents are processed in-memory. Refreshing the page returns to the upload screen. A production system would store documents server-side.
+- **No multi-document list.** There's no document library or history — it's a single-document-at-a-time workflow. Adding a document list would require backend storage.
+- **Standard Word styles only.** The import pipeline maps V14 law firm styles and standard Word `Heading 1`–`Heading 6`. Custom or legacy styles from other templates may render as plain paragraphs.
 
 ## Architecture
 
@@ -48,7 +70,7 @@ src/
 │   ├── mock-review/       # 10 mock AI review items + injection pipeline
 │   └── docx-import/       # Mammoth.js → deserializeHtml pipeline with V14 style mapping
 ├── types/                 # Shared TypeScript types (Anchor, Discussion, ReviewItem)
-└── App.tsx                # Entry point — loads DOCX, renders editor + sidebar
+└── App.tsx                # Entry point — upload UI, document loading, renders editor + sidebar
 ```
 
 ### State Management Split
@@ -140,7 +162,7 @@ Solution: manually inject suggestion marks using `editor.tf.insertNodes` and `se
 
 Mammoth.js converts DOCX → HTML with a custom style mapping for V14 styles (the law firm's template). Plate's `deserializeHtml` converts HTML → Slate AST. A post-processing step assigns sequential IDs (`p{n}_{nanoid}`) to every block-level element — the numeric prefix preserves document order for sidebar sorting, and the nanoid suffix ensures uniqueness.
 
-The style mapping handles 7 V14 variants (Level 1-4 EN, Level 1 EN CAPS, Introduction EN, Parties EN, TOC styles) and falls back gracefully for unmapped styles.
+The style mapping handles 7 V14 variants (Level 1-4 EN, Level 1 EN CAPS, Introduction EN, Parties EN, TOC styles) plus standard Word `Heading 1`–`Heading 6`, and falls back gracefully for unmapped styles.
 
 ## What I'd Improve With More Time
 
@@ -169,7 +191,7 @@ The style mapping handles 7 V14 variants (Level 1-4 EN, Level 1 EN CAPS, Introdu
 | Mock AI data | Spec explicitly says no real AI integration needed | 10 hardcoded items instead of LLM calls |
 | No persistence | No backend required per spec | State resets on page refresh |
 | No auth | Out of scope per spec | Single hardcoded user ("user-1") |
-| Hardcoded DOCX path | Spec says acceptable | No file upload UI |
+| AI review sample-only | Mock data targets specific anchors | Upload shows disabled button with explanation |
 | No e2e tests | Time constraint; unit + adversarial tests cover logic | Documented as TODO with specific scenarios |
 | Single user ID | No multi-user needed | All suggestions/comments attributed to "user-1" |
 
