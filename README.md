@@ -23,7 +23,7 @@ pnpm build      # Production build (includes type-check via tsc -b)
 1. On the landing page, click **"Load Sample Document"** — the bundled shareholders' agreement loads with full AI review support
 2. **Click "Get Perry's Review"** — simulates an AI review pass. After 1.5s, 10 review items appear in the sidebar (5 suggestions with red/green marks in the editor, 5 discussion comments with yellow highlights)
 3. **Click a sidebar card** — the editor scrolls to the relevant text and highlights it in yellow. The highlight persists while the card is selected
-4. **Accept/Reject suggestions** — accept applies the suggested change; reject restores original text. Both remove the suggestion marks
+4. **Accept/Reject suggestions** — accept applies the suggested change; reject restores original text. A green (accept) or red (reject) flash highlight lingers on the affected text for 3 seconds so you can see exactly what changed
 5. **Resolve comments** — marks discussion threads as resolved
 6. **Add your own comments** — select text in the editor, click the floating "Add Comment" button
 7. **Toggle suggesting mode** — toolbar toggle switches between direct editing and track-changes mode. Edits in suggesting mode create new suggestion marks
